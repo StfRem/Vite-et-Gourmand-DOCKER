@@ -32,10 +32,6 @@ function afficherCommandes(commandes) {
         li.classList.add("commande-item");
         li.dataset.id = cmd.id;
 
-        // Stockage de la date brute pour la récupération facile lors de la modification en date FR
-        const dateISO = cmd.datePrestation || "";
-        const dateFR = dateISO ? new Date(dateISO).toLocaleDateString('fr-FR') : "";
-
         let boutonModifier = "";
         let boutonAnnuler = "";
         let boutonAvis = "";
@@ -61,10 +57,8 @@ function afficherCommandes(commandes) {
                 <p><strong>Commande :</strong> ${cmd.id}</p>
                 <p><strong>Nombre de personnes :</strong> ${cmd.nbPersonnes}</p>
                 <p><strong>Prix total :</strong> ${Number(cmd.prixTotal).toFixed(2)} €</p>
-                
-                <p><strong>Date de prestation :</strong> <span class="date-display">${dateFR}</span></p>
-                <input type="hidden" class="date-raw-value" value="${dateISO}">
-
+                <p><strong>Date de prestation :</strong> ${cmd.datePrestation ? new Date(cmd.datePrestation).toLocaleDateString('fr-FR') : ""}</p>
+                <input type="hidden" class="date-raw-value" value="${cmd.datePrestation || ""}">
                 <p><strong>Heure :</strong> ${cmd.heurePrestation || ""}</p>
                 <p><strong>Adresse :</strong> ${cmd.adresse || ""}</p>
                 <p><strong>Code postal :</strong> ${cmd.cp || ""}</p>
@@ -86,6 +80,7 @@ function afficherCommandes(commandes) {
                 <div class="zone-modification" id="zone-modification-${cmd.id}"></div>
             </div>
         `;
+
         liste.appendChild(li);
     });
 }
@@ -124,27 +119,27 @@ document.addEventListener("click", async (e) => {
         return;
     }
 
-// --- AFFICHER FORMULAIRE MODIFICATION ---
-if (target.classList.contains("btn-modifier")) {
-    const id = target.dataset.id;
-    const zone = document.getElementById(`zone-modification-${id}`);
-    if (!zone) return;
+    // --- AFFICHER FORMULAIRE MODIFICATION ---
+    if (target.classList.contains("btn-modifier")) {
+        const id = target.dataset.id;
+        const zone = document.getElementById(`zone-modification-${id}`);
+        if (!zone) return;
 
-    const li = target.closest(".commande-item");
-    const details = li.querySelector(".commande-details");
+        const li = target.closest(".commande-item");
+        const details = li.querySelector(".commande-details");
 
-    const nb = details.querySelector("p:nth-of-type(2)").textContent.replace(/\D+/g, "");
-    const date = details.querySelector("p:nth-of-type(4)").textContent.split(":").slice(1).join(":").trim();
-    const heure = details.querySelector("p:nth-of-type(5)").textContent.split(":").slice(1).join(":").trim();
+        const nb = details.querySelector("p:nth-of-type(2)").textContent.replace(/\D+/g, "");
+        const date = li.querySelector(".date-raw-value").value;
+        const heure = details.querySelector("p:nth-of-type(5)").textContent.split(":").slice(1).join(":").trim();
 
-    // 🔥 Correction : on enlève "Adresse :" et non "Rue :"
-    const adresse = details.querySelector("p:nth-of-type(6)").textContent.replace("Adresse :", "").trim();
-    const cp = details.querySelector("p:nth-of-type(7)").textContent.replace("Code postal :", "").trim();
-    const ville = details.querySelector("p:nth-of-type(8)").textContent.replace("Ville :", "").trim();
+        // 🔥 Correction : on enlève "Adresse :" et non "Rue :"
+        const adresse = details.querySelector("p:nth-of-type(6)").textContent.replace("Adresse :", "").trim();
+        const cp = details.querySelector("p:nth-of-type(7)").textContent.replace("Code postal :", "").trim();
+        const ville = details.querySelector("p:nth-of-type(8)").textContent.replace("Ville :", "").trim();
 
-    const distance = details.querySelector("p:nth-of-type(9)").textContent.replace(/\D+/g, "");
+        const distance = details.querySelector("p:nth-of-type(9)").textContent.replace(/\D+/g, "");
 
-    zone.innerHTML = `
+        zone.innerHTML = `
         <div class="formulaire-modification">
             <h4>Modifier la commande</h4>
 
@@ -174,11 +169,11 @@ if (target.classList.contains("btn-modifier")) {
             <button class="btn-annuler-modif btn-secondary" data-id="${id}">Annuler les modifications</button>
         </div>
     `;
-    return;
-}
+        return;
+    }
 
 
-// --- FERMER FORMULAIRE ---
+    // --- FERMER FORMULAIRE ---
     if (target.classList.contains("btn-annuler-modif")) {
         const id = target.dataset.id;
         const zone = document.getElementById(`zone-modification-${id}`);
@@ -186,62 +181,62 @@ if (target.classList.contains("btn-modifier")) {
         return;
     }
 
-// --- VALIDER MODIFICATION ---
-if (target.classList.contains("btn-valider-modif")) {
-    const id = target.dataset.id;
+    // --- VALIDER MODIFICATION ---
+    if (target.classList.contains("btn-valider-modif")) {
+        const id = target.dataset.id;
 
-    const nb = Number(document.getElementById(`mod-nb-${id}`).value);
-    const date = document.getElementById(`mod-date-${id}`).value;
-    const heure = document.getElementById(`mod-heure-${id}`).value;
+        const nb = Number(document.getElementById(`mod-nb-${id}`).value);
+        const date = document.getElementById(`mod-date-${id}`).value;
+        const heure = document.getElementById(`mod-heure-${id}`).value;
 
-    const adresse = document.getElementById(`mod-adresse-${id}`).value;
-    const cp = document.getElementById(`mod-cp-${id}`).value;
-    const ville = document.getElementById(`mod-ville-${id}`).value;
+        const adresse = document.getElementById(`mod-adresse-${id}`).value;
+        const cp = document.getElementById(`mod-cp-${id}`).value;
+        const ville = document.getElementById(`mod-ville-${id}`).value;
 
-    const distance = Number(document.getElementById(`mod-distance-${id}`).value);
+        const distance = Number(document.getElementById(`mod-distance-${id}`).value);
 
-    if (!nb || !date || !heure || !adresse || !cp || !ville) {
-        alert("Merci de remplir tous les champs.");
-        return;
-    }
-
-    try {
-        const res = await fetch("../PHP/updateCommande.php", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                commandeId: id,
-                userId: user.id,
-                nbPersonnes: nb,
-                datePrestation: date,
-                heurePrestation: heure,
-                adresse,
-                cp,
-                ville,
-                distance
-            })
-        });
-
-        const data = await res.json();
-
-        if (!data.success) {
-            alert(data.message || "Erreur lors de la mise à jour.");
+        if (!nb || !date || !heure || !adresse || !cp || !ville) {
+            alert("Merci de remplir tous les champs.");
             return;
         }
 
-        alert("Commande mise à jour avec succès.");
-        chargerCommandes();
+        try {
+            const res = await fetch("../PHP/updateCommande.php", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    commandeId: id,
+                    userId: user.id,
+                    nbPersonnes: nb,
+                    datePrestation: date,
+                    heurePrestation: heure,
+                    adresse,
+                    cp,
+                    ville,
+                    distance
+                })
+            });
 
-    } catch (err) {
-        console.error(err);
-        alert("Erreur technique lors de la mise à jour.");
+            const data = await res.json();
+
+            if (!data.success) {
+                alert(data.message || "Erreur lors de la mise à jour.");
+                return;
+            }
+
+            alert("Commande mise à jour avec succès.");
+            chargerCommandes();
+
+        } catch (err) {
+            console.error(err);
+            alert("Erreur technique lors de la mise à jour.");
+        }
+        return;
     }
-    return;
-}
 
 
 
-// --- DONNER UN AVIS ---
+    // --- DONNER UN AVIS ---
     if (target.classList.contains("btn-avis")) {
         const id = target.dataset.id;
 
@@ -301,27 +296,27 @@ if (profileForm) {
 
 
     profileForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
+        e.preventDefault();
 
-    const fullname = document.getElementById("edit-fullname").value;
-    const gsm = document.getElementById("edit-gsm").value;
-    const adresse = document.getElementById("edit-adresse").value;
-    const cp = document.getElementById("edit-cp").value;   // ✔ correction
-    const ville = document.getElementById("edit-ville").value;
+        const fullname = document.getElementById("edit-fullname").value;
+        const gsm = document.getElementById("edit-gsm").value;
+        const adresse = document.getElementById("edit-adresse").value;
+        const cp = document.getElementById("edit-cp").value;   // ✔ correction
+        const ville = document.getElementById("edit-ville").value;
 
-    try {
-        const res = await fetch("../PHP/updateUser.php", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                id: user.id,
-                fullname,
-                gsm,
-                adresse,
-                cp,
-                ville
-            })
-        });
+        try {
+            const res = await fetch("../PHP/updateUser.php", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    id: user.id,
+                    fullname,
+                    gsm,
+                    adresse,
+                    cp,
+                    ville
+                })
+            });
 
 
             const data = await res.json();
