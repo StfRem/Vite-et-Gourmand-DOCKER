@@ -1,8 +1,12 @@
 IDENTIFIANT ADMINISTRATEUR
-
 admin@site.com
-
 Admin1234!
+
+Éteindre et supprimer les volumes docker pour réinitialiser:
+docker-compose down -v
+
+Relancer le projet :
+docker-compose up -d
 
 
 
