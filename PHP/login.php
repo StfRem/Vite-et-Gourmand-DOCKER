@@ -1,4 +1,7 @@
 <?php
+// On démarre la session au tout début pour permettre au serveur de stocker les infos
+session_start();
+
 header('Content-Type: application/json');
 require_once 'Database.php';
 
@@ -21,6 +24,11 @@ if ($data) {
             // On utilise UNIQUEMENT password_verify()
             // Cette fonction compare le mot de passe saisi avec le hash stocké
             if (password_verify($password, $user['password'])) {
+                
+                // --- AJOUT SÉCURITÉ SESSION ---
+                // On stocke les infos critiques côté serveur (Docker)
+                $_SESSION['user_id'] = $user['id'];
+                $_SESSION['user_role'] = $user['role'];
                 
                 // On supprime le hash du tableau avant l'envoi pour la sécurité
                 unset($user['password']);
