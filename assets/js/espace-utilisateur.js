@@ -32,6 +32,10 @@ function afficherCommandes(commandes) {
         li.classList.add("commande-item");
         li.dataset.id = cmd.id;
 
+        // Stockage de la date brute pour la récupération facile lors de la modification en date FR
+        const dateISO = cmd.datePrestation || "";
+        const dateFR = dateISO ? new Date(dateISO).toLocaleDateString('fr-FR') : "";
+
         let boutonModifier = "";
         let boutonAnnuler = "";
         let boutonAvis = "";
@@ -57,7 +61,10 @@ function afficherCommandes(commandes) {
                 <p><strong>Commande :</strong> ${cmd.id}</p>
                 <p><strong>Nombre de personnes :</strong> ${cmd.nbPersonnes}</p>
                 <p><strong>Prix total :</strong> ${Number(cmd.prixTotal).toFixed(2)} €</p>
-                <p><strong>Date de prestation :</strong> ${cmd.datePrestation || ""}</p>
+                
+                <p><strong>Date de prestation :</strong> <span class="date-display">${dateFR}</span></p>
+                <input type="hidden" class="date-raw-value" value="${dateISO}">
+
                 <p><strong>Heure :</strong> ${cmd.heurePrestation || ""}</p>
                 <p><strong>Adresse :</strong> ${cmd.adresse || ""}</p>
                 <p><strong>Code postal :</strong> ${cmd.cp || ""}</p>
@@ -79,7 +86,6 @@ function afficherCommandes(commandes) {
                 <div class="zone-modification" id="zone-modification-${cmd.id}"></div>
             </div>
         `;
-
         liste.appendChild(li);
     });
 }
