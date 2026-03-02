@@ -1,0 +1,21 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: Projet-Vite-et-Gourmand-DB
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+    volumes:
+      - ./SQL/database.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "3306:3306"
+
+  app:
+    build: .
+    container_name: Projet-Vite-et-Gourmand-App
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/var/www/html
+    depends_on:
+      - db

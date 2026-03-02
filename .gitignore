@@ -1,0 +1,17 @@
+*.txt
+# Docker
+.docker/
+data/
+db_data/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# PHP
+vendor/
+.phpunit.result.cache
+
+# Logs et Environnement
+*.log
+.env
