@@ -256,8 +256,8 @@ document.addEventListener("click", async (e) => {
         if (confirm("Supprimer ce menu définitivement ?")) {
             const response = await fetch("../PHP/supprimerMenu.php", {
                 method: "POST",
-                credentials: "include", // Assure que les cookies de session sont envoyés pour l'authentification
                 headers: { "Content-Type": "application/json" },
+                credentials: "include", // Assure que les cookies de session sont envoyés pour l'authentification
                 body: JSON.stringify({ id: id })
             });
             const result = await response.json();
