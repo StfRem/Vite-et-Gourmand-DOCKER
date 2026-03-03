@@ -774,10 +774,28 @@ li {
 
 
 
-.admin-actions {
-    display: flex;
-    gap: 10px;
-}
+    /* Liste des commandes */
+    .admin-list li {
+        flex-direction: column !important;
+    }
+
+    .admin-item-info,
+    .admin-actions {
+        width: 100% !important;
+        margin-bottom: 10px;
+    }
+
+    .admin-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .admin-actions select,
+    .admin-actions button {
+        width: 100% !important;
+        padding: 8px;
+    }
 
 
 /* ====== FILTRES ====== */
@@ -825,31 +843,6 @@ li {
         width: 70%;
     }
 }
-
-
-    /* Liste des commandes */
-    .admin-list li {
-        flex-direction: column !important;
-    }
-
-    .admin-item-info,
-    .admin-actions {
-        width: 100% !important;
-        margin-bottom: 10px;
-    }
-
-    .admin-actions {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-    }
-
-    .admin-actions select,
-    .admin-actions button {
-        width: 100% !important;
-        padding: 8px;
-    }
-
 
 
 
