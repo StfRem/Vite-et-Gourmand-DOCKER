@@ -1,24 +1,11 @@
 <?php
-// On démarre la session pour récupérer l'ID de l'utilisateur connecté
-session_start();
-
 header("Content-Type: application/json");
 require_once "Database.php";
-
-// Vérification de sécurité : l'utilisateur est-il connecté ?
-if (!isset($_SESSION['user_id'])) {
-    echo json_encode(["success" => false, "message" => "Session expirée, reconnectez-vous."]);
-    exit;
-}
 
 $data = json_decode(file_get_contents("php://input"), true);
 
 $commandeId = $data["commandeId"];
-
-// --- MODIFICATION SÉCURITÉ ---
-// On ignore le userId envoyé par le JS et on utilise celui de la SESSION
-$userId = $_SESSION['user_id'];
-
+$userId = $data["userId"];
 $nb = $data["nbPersonnes"];
 $date = $data["datePrestation"];
 $heure = $data["heurePrestation"];
@@ -27,14 +14,14 @@ $cp = $data["cp"];
 $ville = $data["ville"];
 $distance = $data["distance"];
 
-// 1. Récupérer la commande (Le WHERE userId = ? garantit que l'utilisateur ne modifie que SA commande)
+// 1. Récupérer la commande
 $sql = "SELECT * FROM commandes WHERE id = ? AND userId = ?";
 $stmt = $pdo->prepare($sql);
 $stmt->execute([$commandeId, $userId]);
 $cmd = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$cmd) {
-    echo json_encode(["success" => false, "message" => "Commande introuvable ou non autorisée"]);
+    echo json_encode(["success" => false, "message" => "Commande introuvable"]);
     exit;
 }
 
