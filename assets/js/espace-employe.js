@@ -1,3 +1,15 @@
+// --- UTILITAIRES DE STOCKAGE ---
+// Cette fonction récupère les données et les transforme en liste utilisable
+function getFromLocalStorage(key) {
+    const data = localStorage.getItem(key);
+    return data ? JSON.parse(data) : [];
+}
+
+// Cette fonction enregistre les listes dans le navigateur
+function saveToLocalStorage(key, data) {
+    localStorage.setItem(key, JSON.stringify(data));
+}
+// -------------------------------
 // Vérification de l'accès employé
 const user = JSON.parse(localStorage.getItem("user"));
 if (!user || user.role !== "employe") {
@@ -8,18 +20,19 @@ if (!user || user.role !== "employe") {
 // DONNÉES
 let commandes = [];
 let avisRecus = [];
-let menus = JSON.parse(localStorage.getItem("menus")) || [];
-let plats = JSON.parse(localStorage.getItem("plats")) || [];
+//let users = []; a supprimer pour l'employé
+let menusFromDB = []; // Menus depuis la base de données
+let plats = getFromLocalStorage("plats");
 let horaires = [];
 
 // SÉLECTEURS
-const filtreStatut = document.getElementById("filtre-statut");
-const filtreClient = document.getElementById("filtre-client");
-const listeCommandes = document.getElementById("liste-commandes");
-const listeAvis = document.getElementById("liste-avis");
 const listeMenus = document.getElementById("liste-menus");
 const listePlats = document.getElementById("liste-plats");
 const listeHoraires = document.getElementById("liste-horaires");
+const listeCommandes = document.getElementById("liste-commandes");
+const listeAvis = document.getElementById("liste-avis");
+const filtreStatut = document.getElementById("filtre-statut");
+const filtreClient = document.getElementById("filtre-client");
 
 // FONCTIONS GÉNÉRIQUES
 function afficherListe(listeElement, data, renderItem, emptyMessage) {
@@ -40,19 +53,41 @@ function supprimerElement(data, setData, id, message) {
     return false;
 }
 
-// AFFICHAGE MENUS
+// CHARGER LES MENUS DEPUIS LA BDD
+async function chargerMenusDepuisServeur() {
+    try {
+        const response = await fetch("../PHP/getMenus.php");
+        const tousLesMenus = await response.json();
+        const idsPermanents = [1, 2, 3]; 
+        
+        // Filtrage des menus personnalisés
+        menusFromDB = tousLesMenus.filter(menu => !idsPermanents.includes(Number(menu.id)));
+        afficherMenus();
+    } catch (error) {
+        console.error("Erreur chargement menus :", error);
+    }
+}
+
+// AFFICHAGE MENUS (Uniquement les menus créés en BDD)
 function afficherMenus() {
     afficherListe(
         listeMenus,
-        menus,
-        (menu) => `
-            <strong>${menu.nom}</strong><br>
-            ${menu.description}<br>
-            Prix : ${menu.prix} €<br>
-            <button class="btn-modifier-menu" data-id="${menu.id}">Modifier</button>
-            <button class="btn-supprimer-menu" data-id="${menu.id}">Supprimer</button>
-        `,
-        "Aucun menu enregistré."
+        menusFromDB,
+        (menu) => {
+            const nomAffiche = menu.titre || menu.nom;
+            return `
+                <div class="admin-item-info">
+                    <strong>${nomAffiche}</strong><br>
+                    ${menu.description}<br>
+                    Prix : ${menu.prix} €
+                </div>
+                <div class="admin-actions">
+                    <button class="btn-modifier-menu" data-id="${menu.id}">Modifier</button>
+                    <button class="btn-danger btn-supprimer-menu" data-id="${menu.id}">Supprimer</button>
+                </div>
+            `;
+        },
+        "Aucun menu personnalisé n'a été créé."
     );
 }
 
@@ -213,31 +248,46 @@ function afficherHoraires() {
 }
 
 // ÉCOUTEURS D'ÉVÉNEMENTS (les boutons)
-document.addEventListener("click", (e) => {
+document.addEventListener("click", async (e) => {
     const id = e.target.dataset.id;
 
-    // 2 - MENUS
+    // --- SUPPRIMER MENU ---
     if (e.target.classList.contains("btn-supprimer-menu")) {
-        if (supprimerElement(menus, (newData) => { menus = newData; }, id, "Supprimer ce menu ?")) {
-            saveToLocalStorage("menus", menus);
-            afficherMenus();
+        if (confirm("Supprimer ce menu définitivement ?")) {
+            const response = await fetch("../PHP/supprimerMenu.php", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id: id })
+            });
+            const result = await response.json();
+            if (result.success) chargerMenusDepuisServeur();
+            else alert("Erreur : " + result.message);
         }
     }
+
+    // --- MODIFIER MENU ---
     if (e.target.classList.contains("btn-modifier-menu")) {
-        const menu = menus.find(m => m.id === id);
+        const menu = menusFromDB.find(m => m.id == id);
         if (!menu) return;
-        const nom = prompt("Nom du menu :", menu.nom);
-        const description = prompt("Description :", menu.description);
-        const prix = prompt("Prix :", menu.prix);
-        if (!nom || !description || !prix) {
-            alert("Tous les champs sont obligatoires.");
-            return;
+
+        const nouveauTitre = prompt("Titre du menu :", menu.titre || menu.nom);
+        const nouvelleDesc = prompt("Description :", menu.description);
+        const nouveauPrix = prompt("Prix :", menu.prix);
+
+        if (nouveauTitre && nouvelleDesc && nouveauPrix) {
+            const response = await fetch("../PHP/modifierMenu.php", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ 
+                    id: id, titre: nouveauTitre, description: nouvelleDesc, prix: parseFloat(nouveauPrix) 
+                })
+            });
+            const result = await response.json();
+            if (result.success) {
+                alert("Menu mis à jour !");
+                chargerMenusDepuisServeur();
+            }
         }
-        menu.nom = nom;
-        menu.description = description;
-        menu.prix = parseFloat(prix);
-        saveToLocalStorage("menus", menus);
-        afficherMenus();
     }
 
     // 3 - PLATS
@@ -354,25 +404,40 @@ document.addEventListener("click", (e) => {
     }
 });
 
-// CRÉATION MENU
-document.getElementById("btn-ajout-menu").addEventListener("click", () => {
+// CRÉATION MENU (Uniquement BDD)
+document.getElementById("btn-ajout-menu").addEventListener("click", async () => {
     const nom = prompt("Nom du menu :");
     const description = prompt("Description :");
     const prixStr = prompt("Prix :");
     const prix = parseFloat(prixStr);
-    if (!nom || !description || !prixStr || isNaN(prix) || prix <= 0) {
-        alert("Tous les champs sont obligatoires et le prix doit être valide.");
+
+    if (!nom || !description || isNaN(prix) || prix <= 0) {
+        alert("Saisie invalide.");
         return;
     }
-    menus.push({
-        id: "MENU-" + Date.now(),
-        nom: nom.trim(),
-        description: description.trim(),
-        prix: prix
-    });
-    saveToLocalStorage("menus", menus);
-    afficherMenus();
-    alert("Menu créé avec succès !");
+
+    try {
+        const response = await fetch("../PHP/creationmenu-admin_employe.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                nom: nom.trim(),
+                description: description.trim(),
+                prix: prix
+            })
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            alert("Menu créé avec succès !");
+            await chargerMenusDepuisServeur(); // Recharge uniquement la BDD
+        } else {
+            alert("Erreur BDD : " + result.message);
+        }
+    } catch (error) {
+        console.error("Erreur réseau :", error);
+        alert("Impossible de contacter le serveur.");
+    }
 });
 
 // CRÉATION PLAT
@@ -480,7 +545,7 @@ document.getElementById("btn-ajout-horaire").addEventListener("click", async () 
 });
 
 // AFFICHAGE INITIAL
-afficherMenus();
+chargerMenusDepuisServeur();
 afficherPlats();
 chargerHorairesDepuisServeur();
 chargerCommandesDepuisServeur();

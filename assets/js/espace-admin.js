@@ -13,7 +13,7 @@ if (!user || user.role !== "admin") {
 let commandes = [];
 let avisRecus = [];
 let users = [];
-let menus = getFromLocalStorage("menus");
+let menusFromDB = []; // Menus depuis la base de données
 let plats = getFromLocalStorage("plats");
 let horaires = [];
 
@@ -65,19 +65,46 @@ function afficherEmployes() {
     );
 }
 
-// AFFICHAGE MENUS
+// CHARGER LES MENUS DEPUIS LA BDD
+async function chargerMenusDepuisServeur() {
+    try {
+        const response = await fetch("../PHP/getMenus.php");
+        const tousLesMenus = await response.json();
+
+        // LISTE DES IDS À MASQUER (tes 3 menus de base)
+        const idsPermanents = [1, 2, 3]; 
+
+        // On ne garde que les menus dont l'ID n'est pas dans la liste ci-dessus
+        menusFromDB = tousLesMenus.filter(menu => !idsPermanents.includes(Number(menu.id)));
+
+        afficherMenus();
+    } catch (error) {
+        console.error("Erreur chargement menus BDD :", error);
+        afficherMenus();
+    }
+}
+
+// AFFICHAGE MENUS (Uniquement les menus créés en BDD)
 function afficherMenus() {
     afficherListe(
         listeMenus,
-        menus,
-        (menu) => `
-            <strong>${menu.nom}</strong><br>
-            ${menu.description}<br>
-            Prix : ${menu.prix} €<br>
-            <button class="btn-modifier-menu" data-id="${menu.id}">Modifier</button>
-            <button class="btn-supprimer-menu" data-id="${menu.id}">Supprimer</button>
-        `,
-        "Aucun menu enregistré."
+        menusFromDB,
+        (menu) => {
+            const nomAffiche = menu.titre || menu.nom;
+
+            return `
+                <div class="admin-item-info">
+                    <strong>${nomAffiche}</strong>
+                    ${menu.description}<br>
+                    Prix : ${menu.prix} €
+                </div>
+                <div class="admin-actions">
+                    <button class="btn-modifier-menu" data-id="${menu.id}">Modifier</button>
+                    <button class="btn-danger btn-supprimer-menu" data-id="${menu.id}">Supprimer</button>
+                </div>
+            `;
+        },
+        "Aucun menu personnalisé n'a été créé."
     );
 }
 
@@ -217,7 +244,7 @@ function afficherHoraires() {
         "dimanche"
     ];
 
-    // Tri des horaires selon l’ordre des jours écrit en Majuscule ou minuscule
+    // Tri des horaires selon l'ordre des jours écrit en Majuscule ou minuscule
     const horairesTries = [...horaires].sort((a, b) => {
         const ja = a.jour.toLowerCase();
         const jb = b.jour.toLowerCase();
@@ -264,28 +291,56 @@ document.addEventListener("click", (e) => {
         }
     }
 
-    // 2 - MENUS
+// 2 - GESTION DES MENUS
     if (e.target.classList.contains("btn-supprimer-menu")) {
-        if (supprimerElement(menus, (newData) => { menus = newData; }, id, "Supprimer ce menu ?")) {
-            saveToLocalStorage("menus", menus);
-            afficherMenus();
+        if (confirm("Supprimer ce menu définitivement ?")) {
+            // On envoie la demande au serveur
+            fetch("../PHP/supprimerMenu.php", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id: id })
+            })
+            .then(r => r.json())
+            .then(result => {
+                if (result.success) {
+                    chargerMenusDepuisServeur(); // Rafraîchit la liste depuis la BDD
+                } else {
+                    alert("Erreur : " + result.message);
+                }
+            });
         }
     }
+
     if (e.target.classList.contains("btn-modifier-menu")) {
-        const menu = menus.find(m => m.id === id);
+        // On trouve le menu dans la liste actuelle pour pré-remplir les prompts
+        const menu = menusFromDB.find(m => m.id == id);
         if (!menu) return;
-        const nom = prompt("Nom du menu :", menu.nom);
-        const description = prompt("Description :", menu.description);
-        const prix = prompt("Prix :", menu.prix);
-        if (!nom || !description || !prix) {
-            alert("Tous les champs sont obligatoires.");
-            return;
+
+        const nouveauTitre = prompt("Titre du menu :", menu.titre || menu.nom);
+        const nouvelleDesc = prompt("Description :", menu.description);
+        const nouveauPrix = prompt("Prix :", menu.prix);
+
+        if (nouveauTitre && nouvelleDesc && nouveauPrix) {
+            fetch("../PHP/modifierMenu.php", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ 
+                    id: id, 
+                    titre: nouveauTitre, 
+                    description: nouvelleDesc, 
+                    prix: parseFloat(nouveauPrix) 
+                })
+            })
+            .then(r => r.json())
+            .then(result => {
+                if (result.success) {
+                    alert("Menu mis à jour !");
+                    chargerMenusDepuisServeur();
+                } else {
+                    alert("Erreur : " + result.message);
+                }
+            });
         }
-        menu.nom = nom;
-        menu.description = description;
-        menu.prix = parseFloat(prix);
-        saveToLocalStorage("menus", menus);
-        afficherMenus();
     }
 
     // 3 - PLATS
@@ -435,25 +490,40 @@ document.getElementById("btn-ajout-employe").addEventListener("click", async () 
     }
 });
 
-// CRÉATION MENU
-document.getElementById("btn-ajout-menu").addEventListener("click", () => {
+// CRÉATION MENU (Uniquement BDD)
+document.getElementById("btn-ajout-menu").addEventListener("click", async () => {
     const nom = prompt("Nom du menu :");
     const description = prompt("Description :");
     const prixStr = prompt("Prix :");
     const prix = parseFloat(prixStr);
-    if (!nom || !description || !prixStr || isNaN(prix) || prix <= 0) {
-        alert("Tous les champs sont obligatoires et le prix doit être valide.");
+
+    if (!nom || !description || isNaN(prix) || prix <= 0) {
+        alert("Saisie invalide.");
         return;
     }
-    menus.push({
-        id: "MENU-" + Date.now(),
-        nom: nom.trim(),
-        description: description.trim(),
-        prix: prix
-    });
-    saveToLocalStorage("menus", menus);
-    afficherMenus();
-    alert("Menu créé avec succès !");
+
+    try {
+        const response = await fetch("../PHP/creationmenu-admin_employe.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                nom: nom.trim(),
+                description: description.trim(),
+                prix: prix
+            })
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            alert("Menu créé avec succès !");
+            await chargerMenusDepuisServeur(); // Recharge uniquement la BDD
+        } else {
+            alert("Erreur BDD : " + result.message);
+        }
+    } catch (error) {
+        console.error("Erreur réseau :", error);
+        alert("Impossible de contacter le serveur.");
+    }
 });
 
 // CRÉATION PLAT
@@ -503,18 +573,18 @@ Cordialement, L'équipe Vite & Gourmand`);
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ id: id, statut: nouveauStatut })
         })
-        .then(r => r.json())
-        .then(result => {
-            if (result.success) {
-                alert("Statut mis à jour avec succès !");
-                chargerCommandesDepuisServeur(); // Recharge la liste depuis MySQL
-            } else {
-                alert("Erreur lors de la mise à jour : " + result.message);
-            }
-        })
-        .catch(error => {
-            console.error("Erreur réseau ou chemin PHP :", error);
-        });
+            .then(r => r.json())
+            .then(result => {
+                if (result.success) {
+                    alert("Statut mis à jour avec succès !");
+                    chargerCommandesDepuisServeur(); // Recharge la liste depuis MySQL
+                } else {
+                    alert("Erreur lors de la mise à jour : " + result.message);
+                }
+            })
+            .catch(error => {
+                console.error("Erreur réseau ou chemin PHP :", error);
+            });
     }
 });
 
@@ -562,7 +632,7 @@ document.getElementById("btn-ajout-horaire").addEventListener("click", async () 
 
 // AFFICHAGE INITIAL
 chargerEmployesDepuisServeur();
-afficherMenus();
+chargerMenusDepuisServeur();
 afficherPlats();
 chargerHorairesDepuisServeur();
 chargerCommandesDepuisServeur();
