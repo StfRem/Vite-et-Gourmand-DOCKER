@@ -298,6 +298,7 @@ document.addEventListener("click", (e) => {
             fetch("../PHP/supprimerMenu.php", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
+                credentials: "include", // Assure que les cookies de session sont envoyés pour l'authentification
                 body: JSON.stringify({ id: id })
             })
             .then(r => r.json())
@@ -506,6 +507,7 @@ document.getElementById("btn-ajout-menu").addEventListener("click", async () => 
         const response = await fetch("../PHP/creationmenu-admin_employe.php", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
+            credentials: "include", // Assure que les cookies de session sont envoyés pour l'authentification
             body: JSON.stringify({
                 nom: nom.trim(),
                 description: description.trim(),

@@ -256,6 +256,7 @@ document.addEventListener("click", async (e) => {
         if (confirm("Supprimer ce menu définitivement ?")) {
             const response = await fetch("../PHP/supprimerMenu.php", {
                 method: "POST",
+                credentials: "include", // Assure que les cookies de session sont envoyés pour l'authentification
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ id: id })
             });
@@ -420,6 +421,7 @@ document.getElementById("btn-ajout-menu").addEventListener("click", async () => 
         const response = await fetch("../PHP/creationmenu-admin_employe.php", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
+            credentials: "include", // Assure que les cookies de session sont envoyés pour l'authentification
             body: JSON.stringify({
                 nom: nom.trim(),
                 description: description.trim(),
