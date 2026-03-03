@@ -1,19 +1,24 @@
 <?php
+session_start(); 
 header("Content-Type: application/json; charset=utf-8");
 require_once "Database.php";
 
-// Log pour déboguer
-error_log("[MENU] Requête POST reçue");
-
-$data = json_decode(file_get_contents("php://input"), true);
-error_log("[MENU] Données reçues: " . json_encode($data));
-
-// Vérifier que les données sont reçues
-if (!$data || !isset($data['nom']) || !isset($data['description']) || !isset($data['prix'])) {
+// 1. VÉRIFICATION HARMONISÉE AVEC LOGIN.PHP
+// On vérifie si 'user_role' existe dans la session
+if (!isset($_SESSION['user_role']) || !in_array($_SESSION['user_role'], ['admin', 'employe'])) {
+    http_response_code(403); 
     echo json_encode([
         "success" => false,
-        "message" => "Données manquantes : nom, description ou prix"
+        "message" => "Accès non autorisé : privilèges insuffisants (Rôle actuel: " . ($_SESSION['user_role'] ?? 'aucun') . ")"
     ]);
+    exit;
+}
+
+// ... reste du code (récupération JSON et insertion) ...
+$data = json_decode(file_get_contents("php://input"), true);
+
+if (!$data || empty($data['nom']) || empty($data['description']) || !isset($data['prix'])) {
+    echo json_encode(["success" => false, "message" => "Données manquantes"]);
     exit;
 }
 
@@ -21,52 +26,16 @@ $nom = trim($data['nom']);
 $description = trim($data['description']);
 $prix = floatval($data['prix']);
 
-// Validation basique
-if (empty($nom) || empty($description) || $prix <= 0) {
-    echo json_encode([
-        "success" => false,
-        "message" => "Les champs doivent être valides (prix > 0)"
-    ]);
-    exit;
-}
-
 try {
-    // Insérer le menu dans la table menus
-    // Les 3 menus existants ont les IDs 1, 2, 3 donc les nouveaux auront 4+
     $sql = $pdo->prepare("
         INSERT INTO menus (titre, description, theme, regime, personnesMin, prix, conditions, stock)
-        VALUES (?, ?, 'Admin', 'Personnalisé', 1, ?, 'Menu créé par l\'administrateur', 50)
+        VALUES (?, ?, 'Admin', 'Personnalisé', 1, ?, 'Menu créé par l\'équipe', 50)
     ");
     
-    $result = $sql->execute([$nom, $description, $prix]);
-    
-    if ($result) {
-        $menuId = $pdo->lastInsertId();
-        echo json_encode([
-            "success" => true,
-            "message" => "Menu créé avec succès",
-            "id" => $menuId,
-            "menu" => [
-                "id" => $menuId,
-                "titre" => $nom,
-                "nom" => $nom,
-                "description" => $description,
-                "prix" => $prix,
-                "theme" => "Admin",
-                "regime" => "Personnalisé"
-            ]
-        ]);
-    } else {
-        echo json_encode([
-            "success" => false,
-            "message" => "Erreur lors de l'insertion en base de données"
-        ]);
+    if ($sql->execute([$nom, $description, $prix])) {
+        echo json_encode(["success" => true, "message" => "Menu créé avec succès"]);
     }
 } catch (Exception $e) {
-    error_log("[MENU] Exception: " . $e->getMessage());
-    echo json_encode([
-        "success" => false,
-        "message" => "Erreur serveur : " . $e->getMessage()
-    ]);
+    echo json_encode(["success" => false, "message" => "Erreur : " . $e->getMessage()]);
 }
 ?>
