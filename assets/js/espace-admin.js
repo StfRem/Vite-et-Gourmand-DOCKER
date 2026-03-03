@@ -273,6 +273,7 @@ document.addEventListener("click", (e) => {
         fetch("../PHP/suspendEmploye.php", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
+            credentials: "include", // Assure que les cookies de session sont envoyés pour l'authentification
             body: JSON.stringify({ id })
         })
             .then(r => r.json())
@@ -284,6 +285,7 @@ document.addEventListener("click", (e) => {
             fetch("../PHP/supprimerEmploye.php", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
+                credentials: "include", // Assure que les cookies de session sont envoyés pour l'authentification
                 body: JSON.stringify({ id })
             })
                 .then(r => r.json())
@@ -325,6 +327,7 @@ document.addEventListener("click", (e) => {
             fetch("../PHP/modifierMenu.php", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
+                credentials: "include", // Assure que les cookies de session sont envoyés pour l'authentification
                 body: JSON.stringify({ 
                     id: id, 
                     titre: nouveauTitre, 
@@ -383,6 +386,7 @@ document.addEventListener("click", (e) => {
         fetch("../PHP/annulerCommande.php", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
+            credentials: "include", // Assure que les cookies de session sont envoyés pour l'authentification
             body: JSON.stringify({ id, contact, motif })
         })
             .then(r => r.json())
@@ -406,6 +410,7 @@ document.addEventListener("click", (e) => {
         fetch("../PHP/modifierStatutAvis.php", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
+            credentials: "include", // Assure que les cookies de session sont envoyés pour l'authentification
             body: JSON.stringify({ id: idAvis, action: action })
         })
             .then(r => r.json())
@@ -425,6 +430,7 @@ document.addEventListener("click", (e) => {
             fetch("../PHP/supprimerHoraire.php", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
+                credentials: "include", // Assure que les cookies de session sont envoyés pour l'authentification
                 body: JSON.stringify({ id })
             })
                 .then(r => r.json())
@@ -451,6 +457,7 @@ document.addEventListener("click", (e) => {
         fetch("../PHP/modifierHoraire.php", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
+            credentials: "include", // Assure que les cookies de session sont envoyés pour l'authentification
             body: JSON.stringify({ id, jour, ouverture, fermeture })
         })
             .then(r => r.json())
@@ -479,6 +486,7 @@ document.getElementById("btn-ajout-employe").addEventListener("click", async () 
     const response = await fetch("../PHP/ajoutEmploye.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include", // Assure que les cookies de session sont envoyés pour l'authentification
         body: JSON.stringify({ fullname, email, password })
     });
 
@@ -573,6 +581,7 @@ Cordialement, L'équipe Vite & Gourmand`);
         fetch("../PHP/modifierStatutCommande.php", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
+            credentials: "include", // Assure que les cookies de session sont envoyés pour l'authentification
             body: JSON.stringify({ id: id, statut: nouveauStatut })
         })
             .then(r => r.json())
@@ -620,6 +629,7 @@ document.getElementById("btn-ajout-horaire").addEventListener("click", async () 
     const response = await fetch("../PHP/ajoutHoraire.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include", // Assure que les cookies de session sont envoyés pour l'authentification
         body: JSON.stringify({ jour, ouverture, fermeture })
     });
 

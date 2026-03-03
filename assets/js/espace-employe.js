@@ -279,6 +279,7 @@ document.addEventListener("click", async (e) => {
             const response = await fetch("../PHP/modifierMenu.php", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
+                credentials: "include", // Assure que les cookies de session sont envoyés pour l'authentification
                 body: JSON.stringify({ 
                     id: id, titre: nouveauTitre, description: nouvelleDesc, prix: parseFloat(nouveauPrix) 
                 })
@@ -330,6 +331,7 @@ document.addEventListener("click", async (e) => {
         fetch("../PHP/annulerCommande.php", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
+            credentials: "include", // Assure que les cookies de session sont envoyés pour l'authentification
             body: JSON.stringify({ id, contact, motif })
         })
             .then(r => r.json())
@@ -353,6 +355,7 @@ document.addEventListener("click", async (e) => {
         fetch("../PHP/modifierStatutAvis.php", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
+            credentials: "include", // Assure que les cookies de session sont envoyés pour l'authentification
             body: JSON.stringify({ id: idAvis, action: action })
         })
             .then(r => r.json())
@@ -372,6 +375,7 @@ document.addEventListener("click", async (e) => {
             fetch("../PHP/supprimerHoraire.php", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
+                credentials: "include", // Assure que les cookies de session sont envoyés pour l'authentification
                 body: JSON.stringify({ id })
             })
                 .then(r => r.json())
@@ -398,6 +402,7 @@ document.addEventListener("click", async (e) => {
         fetch("../PHP/modifierHoraire.php", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
+            credentials: "include", // Assure que les cookies de session sont envoyés pour l'authentification
             body: JSON.stringify({ id, jour, ouverture, fermeture })
         })
             .then(r => r.json())
@@ -487,6 +492,7 @@ Cordialement, L'équipe Vite & Gourmand`);
         fetch("../PHP/modifierStatutCommande.php", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
+            credentials: "include", // Assure que les cookies de session sont envoyés pour l'authentification
             body: JSON.stringify({ id: id, statut: nouveauStatut })
         })
         .then(r => r.json())
@@ -534,6 +540,7 @@ document.getElementById("btn-ajout-horaire").addEventListener("click", async () 
     const response = await fetch("../PHP/ajoutHoraire.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include", // Assure que les cookies de session sont envoyés pour l'authentification
         body: JSON.stringify({ jour, ouverture, fermeture })
     });
 
