@@ -1,4 +1,3 @@
-
 // NAVBAR DYNAMIQUE
 export function loadNavbar() {
     const user = JSON.parse(localStorage.getItem("user"));
@@ -47,14 +46,28 @@ export function loadNavbar() {
     // Gestion de la déconnexion
     const btnDeconnexion = document.getElementById("btn-deconnexion");
     if (btnDeconnexion) {
-        btnDeconnexion.onclick = function(e) {
+        btnDeconnexion.onclick = async function(e) {
             e.preventDefault();
+
+            // --- DECONNEXION SERVEUR ---
+            try {
+                const logoutPath = isInsidePages ? "../PHP/logout.php" : "./PHP/logout.php";
+                
+                await fetch(logoutPath, {
+                    method: "GET",
+                    credentials: "include" 
+                });
+            } catch (error) {
+                console.error("Erreur lors de la déconnexion serveur :", error);
+            }
+            // ---------------------------
+
             localStorage.clear(); 
             alert("Vous êtes déconnecté.");
             window.location.href = isInsidePages ? "../index.html" : "./index.html";
         };
     }
-}
+} // Fin de loadNavbar
 
 // FOOTER DYNAMIQUE
 export function loadFooter() {
