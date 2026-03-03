@@ -2,6 +2,14 @@ IDENTIFIANT ADMINISTRATEUR
 admin@site.com
 Admin1234!
 
+EMPLOYE
+julie@site.com
+JulieTemp123
+
+UTILISATEUR
+stephaneremiatt54@gmail.com	
+54@Macommande
+
 Éteindre et supprimer les volumes docker pour réinitialiser:
 docker-compose down -v
 
