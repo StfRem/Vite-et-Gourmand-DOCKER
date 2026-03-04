@@ -1,6 +1,5 @@
 // UTILITAIRES
-const getFromLocalStorage = (key) => JSON.parse(localStorage.getItem(key)) || [];
-const saveToLocalStorage = (key, data) => localStorage.setItem(key, JSON.stringify(data));
+// Les plats sont maintenant stockés en base via des endpoints PHP
 
 // Vérification du rôle administrateur
 const user = JSON.parse(localStorage.getItem("user"));
@@ -14,7 +13,7 @@ let commandes = [];
 let avisRecus = [];
 let users = [];
 let menusFromDB = []; // Menus depuis la base de données
-let plats = getFromLocalStorage("plats");
+let plats = []; // Chargés depuis le serveur
 let horaires = [];
 
 // SÉLECTEURS
@@ -82,6 +81,24 @@ async function chargerMenusDepuisServeur() {
         console.error("Erreur chargement menus BDD :", error);
         afficherMenus();
     }
+}
+
+// PLATS - backend
+async function chargerPlatsDepuisServeur() {
+    try {
+        const res = await fetch("../PHP/getPlats.php");
+        const result = await res.json();
+        if (result.success) {
+            plats = result.data;
+        } else {
+            plats = [];
+            console.error('Erreur getPlats:', result.message);
+        }
+    } catch (err) {
+        console.error('Erreur réseau getPlats:', err);
+        plats = [];
+    }
+    afficherPlats();
 }
 
 // AFFICHAGE MENUS (Uniquement les menus créés en BDD)
@@ -347,15 +364,28 @@ document.addEventListener("click", (e) => {
         }
     }
 
-    // 3 - PLATS
+    // 3 - PLATS (via backend)
     if (e.target.classList.contains("btn-supprimer-plat")) {
-        if (supprimerElement(plats, (newData) => { plats = newData; }, id, "Supprimer ce plat ?")) {
-            saveToLocalStorage("plats", plats);
-            afficherPlats();
-        }
+        if (!confirm("Supprimer ce plat ?")) return;
+        fetch("../PHP/supprimerPlat.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ id })
+        })
+            .then(r => r.json())
+            .then(result => {
+                if (result.success) {
+                    chargerPlatsDepuisServeur();
+                } else {
+                    alert("Erreur : " + result.message);
+                }
+            })
+            .catch(err => console.error('Erreur supprimerPlat:', err));
     }
+
     if (e.target.classList.contains("btn-modifier-plat")) {
-        const plat = plats.find(p => p.id === id);
+        const plat = plats.find(p => String(p.id) === String(id));
         if (!plat) return;
         const nom = prompt("Nom du plat :", plat.nom);
         const description = prompt("Description :", plat.description);
@@ -363,10 +393,22 @@ document.addEventListener("click", (e) => {
             alert("Tous les champs sont obligatoires.");
             return;
         }
-        plat.nom = nom;
-        plat.description = description;
-        saveToLocalStorage("plats", plats);
-        afficherPlats();
+
+        fetch("../PHP/modifierPlat.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ id, nom: nom.trim(), description: description.trim() })
+        })
+            .then(r => r.json())
+            .then(result => {
+                if (result.success) {
+                    chargerPlatsDepuisServeur();
+                } else {
+                    alert("Erreur : " + result.message);
+                }
+            })
+            .catch(err => console.error('Erreur modifierPlat:', err));
     }
 
     // 4 - COMMANDES
@@ -537,24 +579,36 @@ document.getElementById("btn-ajout-menu").addEventListener("click", async () => 
 });
 
 // CRÉATION PLAT
-document.getElementById("btn-ajout-plat").addEventListener("click", () => {
-    const ajouterPlat = (type) => {
+document.getElementById("btn-ajout-plat").addEventListener("click", async () => {
+    const types = ["entrée", "plat principal", "dessert"];
+    const toCreate = [];
+    for (const type of types) {
         const nom = prompt(`Nom du ${type} (laisser vide si aucun) :`);
         if (nom) {
-            const description = prompt(`Description du ${type} :`);
-            plats.push({
-                id: "PLAT-" + Date.now(),
-                nom: nom.trim(),
-                description: description.trim()
+            const description = prompt(`Description du ${type} :`) || "";
+            toCreate.push({ nom: nom.trim(), description: description.trim() });
+        }
+    }
+
+    if (toCreate.length === 0) return;
+
+    try {
+        for (const p of toCreate) {
+            await fetch("../PHP/ajoutPlat.php", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify(p)
+            }).then(r => r.json()).then(res => {
+                if (!res.success) throw new Error(res.message || 'Erreur ajoutPlat');
             });
         }
-    };
-    ajouterPlat("entrée");
-    ajouterPlat("plat principal");
-    ajouterPlat("dessert");
-    saveToLocalStorage("plats", plats);
-    afficherPlats();
-    alert("Plat(s) ajouté(s) avec succès !");
+        await chargerPlatsDepuisServeur();
+        alert("Plat(s) ajouté(s) avec succès !");
+    } catch (err) {
+        console.error('Erreur ajoutPlat:', err);
+        alert('Impossible d\'ajouter le(s) plat(s) : ' + err.message);
+    }
 });
 
 // CHANGEMENT DE STATUT COMMANDE
@@ -645,7 +699,7 @@ document.getElementById("btn-ajout-horaire").addEventListener("click", async () 
 // AFFICHAGE INITIAL
 chargerEmployesDepuisServeur();
 chargerMenusDepuisServeur();
-afficherPlats();
+chargerPlatsDepuisServeur();
 chargerHorairesDepuisServeur();
 chargerCommandesDepuisServeur();
 chargerAvisDepuisServeur();
