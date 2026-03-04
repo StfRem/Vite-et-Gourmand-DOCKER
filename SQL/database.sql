@@ -3,8 +3,14 @@ SET NAMES 'utf8mb4';
 SET CHARACTER SET utf8mb4;
 
 
-CREATE DATABASE vite_et_gourmand;
+CREATE DATABASE IF NOT EXISTS vite_et_gourmand;
 USE vite_et_gourmand;
+
+CREATE TABLE creation_plat (
+    id VARCHAR(50) PRIMARY KEY,
+    nom VARCHAR(100) NOT NULL,
+    description TEXT NOT NULL
+) ENGINE=InnoDB;
 
 -- TABLE MENUS
 CREATE TABLE menus (
