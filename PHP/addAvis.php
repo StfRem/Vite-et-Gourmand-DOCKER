@@ -1,6 +1,16 @@
 <?php
+session_start();
 header("Content-Type: application/json; charset=utf-8");
-require_once "Database.php";
+// VÉRIFICATION DE LA SESSION
+if (!isset($_SESSION['user_role']) || !in_array($_SESSION['user_role'], ['admin', 'employe'])) {
+    http_response_code(403); 
+    echo json_encode([
+        "success" => false,
+        "message" => "Accès refusé : session expirée ou privilèges insuffisants."
+    ]);
+    exit; // <--- C'est ce qui empêche réellement la suppression/création
+}
+require_once 'Database.php';
 
 // On empêche les warnings de polluer le retour JSON
 error_reporting(0);
