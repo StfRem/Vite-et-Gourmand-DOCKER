@@ -28,22 +28,33 @@ const filtreClient = document.getElementById("filtre-client");
 
 // FONCTIONS GÉNÉRIQUES
 function afficherListe(listeElement, data, renderItem, emptyMessage) {
-    listeElement.innerHTML = data.length === 0 ? `<p>${emptyMessage}</p>` : "";
+    // Clear element safely without using innerHTML for each item
+    while (listeElement.firstChild) {
+        listeElement.firstChild.remove();
+    }
+    if (data.length === 0) {
+        const p = document.createElement('p');
+        p.textContent = emptyMessage;
+        listeElement.appendChild(p);
+        return;
+    }
     data.forEach(item => {
         const li = document.createElement("li");
-        li.innerHTML = renderItem(item);
+        // renderItem now returns a DOM fragment or text-safe element
+        const content = renderItem(item);
+        if (typeof content === 'string') {
+            // fallback: create a text node
+            li.textContent = content;
+        } else if (content instanceof Node) {
+            li.appendChild(content);
+        } else {
+            li.textContent = JSON.stringify(content);
+        }
         listeElement.appendChild(li);
     });
 }
 
-function supprimerElement(data, setData, id, message) {
-    if (confirm(message)) {
-        const newData = data.filter(item => item.id !== id);
-        setData(newData);
-        return true;
-    }
-    return false;
-}
+// supprimé : fonction générique de suppression n'est plus utilisée, données manipulées directement via backend
 
 // AFFICHAGE EMPLOYÉS
 function afficherEmployes() {
@@ -51,15 +62,40 @@ function afficherEmployes() {
     afficherListe(
         listeEmployes,
         employes,
-        (emp) => `
-            <strong>${emp.fullname}</strong><br>
-            Email : ${emp.email}<br>
-            Statut : <strong>${emp.suspendu ? "EN SUSPENS" : "Actif"}</strong><br>
-            <button class="btn-suspend" data-id="${emp.id}">
-                ${emp.suspendu ? "Réactiver" : "Suspendre"}
-            </button>
-            <button class="btn-supprimer" data-id="${emp.id}">Supprimer</button>
-        `,
+        (emp) => {
+            const wrapper = document.createElement('div');
+            const name = document.createElement('strong');
+            name.textContent = emp.fullname;
+            wrapper.appendChild(name);
+            wrapper.appendChild(document.createElement('br'));
+
+            const email = document.createElement('span');
+            email.textContent = `Email : ${emp.email}`;
+            wrapper.appendChild(email);
+            wrapper.appendChild(document.createElement('br'));
+
+            const statut = document.createElement('span');
+            const statutStrong = document.createElement('strong');
+            statutStrong.textContent = emp.suspendu ? "EN SUSPENS" : "Actif";
+            statut.appendChild(document.createTextNode('Statut : '));
+            statut.appendChild(statutStrong);
+            wrapper.appendChild(statut);
+            wrapper.appendChild(document.createElement('br'));
+
+            const btnSuspend = document.createElement('button');
+            btnSuspend.className = 'btn-suspend';
+            btnSuspend.dataset.id = emp.id;
+            btnSuspend.textContent = emp.suspendu ? "Réactiver" : "Suspendre";
+            wrapper.appendChild(btnSuspend);
+
+            const btnDel = document.createElement('button');
+            btnDel.className = 'btn-supprimer';
+            btnDel.dataset.id = emp.id;
+            btnDel.textContent = 'Supprimer';
+            wrapper.appendChild(btnDel);
+
+            return wrapper;
+        },
         "Aucun employé enregistré."
     );
 }
@@ -71,10 +107,10 @@ async function chargerMenusDepuisServeur() {
         const tousLesMenus = await response.json();
 
         // LISTE DES IDS À MASQUER (tes 3 menus de base)
-        const idsPermanents = [1, 2, 3]; 
+        const idsPermanents = new Set([1, 2, 3]); 
 
         // On ne garde que les menus dont l'ID n'est pas dans la liste ci-dessus
-        menusFromDB = tousLesMenus.filter(menu => !idsPermanents.includes(Number(menu.id)));
+        menusFromDB = tousLesMenus.filter(menu => !idsPermanents.has(Number(menu.id)));
 
         afficherMenus();
     } catch (error) {
@@ -108,18 +144,35 @@ function afficherMenus() {
         menusFromDB,
         (menu) => {
             const nomAffiche = menu.titre || menu.nom;
+            const wrapper = document.createElement('div');
+            const info = document.createElement('div');
+            info.className = 'admin-item-info';
+            const strong = document.createElement('strong');
+            strong.textContent = nomAffiche;
+            info.appendChild(strong);
+            const desc = document.createElement('span');
+            desc.textContent = menu.description;
+            info.appendChild(desc);
+            const prix = document.createElement('span');
+            prix.textContent = `Prix : ${menu.prix} €`;
+            info.appendChild(prix);
 
-            return `
-                <div class="admin-item-info">
-                    <strong>${nomAffiche}</strong>
-                    ${menu.description}<br>
-                    Prix : ${menu.prix} €
-                </div>
-                <div class="admin-actions">
-                    <button class="btn-modifier-menu" data-id="${menu.id}">Modifier</button>
-                    <button class="btn-danger btn-supprimer-menu" data-id="${menu.id}">Supprimer</button>
-                </div>
-            `;
+            const actions = document.createElement('div');
+            actions.className = 'admin-actions';
+            const btnMod = document.createElement('button');
+            btnMod.className = 'btn-modifier-menu';
+            btnMod.dataset.id = menu.id;
+            btnMod.textContent = 'Modifier';
+            const btnSup = document.createElement('button');
+            btnSup.className = 'btn-danger btn-supprimer-menu';
+            btnSup.dataset.id = menu.id;
+            btnSup.textContent = 'Supprimer';
+            actions.appendChild(btnMod);
+            actions.appendChild(btnSup);
+
+            wrapper.appendChild(info);
+            wrapper.appendChild(actions);
+            return wrapper;
         },
         "Aucun menu personnalisé n'a été créé."
     );
@@ -130,16 +183,34 @@ function afficherPlats() {
     afficherListe(
         listePlats,
         plats,
-        (plat) => `
-            <div class="admin-item-info">
-                <strong>${plat.nom}</strong>
-                <span>${plat.description}</span>
-            </div>
-            <div class="admin-actions">
-                <button class="btn-action btn-modifier-plat" data-id="${plat.id}">Modifier</button>
-                <button class="btn-danger btn-supprimer-plat" data-id="${plat.id}">Supprimer</button>
-            </div>
-        `,
+        (plat) => {
+            const wrapper = document.createElement('div');
+            const info = document.createElement('div');
+            info.className = 'admin-item-info';
+            const strong = document.createElement('strong');
+            strong.textContent = plat.nom;
+            const spanDesc = document.createElement('span');
+            spanDesc.textContent = plat.description;
+            info.appendChild(strong);
+            info.appendChild(spanDesc);
+
+            const actions = document.createElement('div');
+            actions.className = 'admin-actions';
+            const btnMod = document.createElement('button');
+            btnMod.className = 'btn-action btn-modifier-plat';
+            btnMod.dataset.id = plat.id;
+            btnMod.textContent = 'Modifier';
+            const btnSup = document.createElement('button');
+            btnSup.className = 'btn-danger btn-supprimer-plat';
+            btnSup.dataset.id = plat.id;
+            btnSup.textContent = 'Supprimer';
+            actions.appendChild(btnMod);
+            actions.appendChild(btnSup);
+
+            wrapper.appendChild(info);
+            wrapper.appendChild(actions);
+            return wrapper;
+        },
         "Aucun plat enregistré."
     );
 }
@@ -172,46 +243,88 @@ function afficherCommandes() {
         return matchStatut && matchNom;
     });
 
-    listeCommandes.innerHTML = commandesFiltrees.length === 0
-        ? "<p>Aucune commande trouvée.</p>"
-        : "";
+    if (commandesFiltrees.length === 0) {
+        listeCommandes.textContent = '';
+        const p = document.createElement('p');
+        p.textContent = 'Aucune commande trouvée.';
+        listeCommandes.appendChild(p);
+    } else {
+        listeCommandes.textContent = '';
+        commandesFiltrees.forEach(cmd => {
+            const li = document.createElement("li");
+            li.classList.add("admin-item");
 
-    commandesFiltrees.forEach(cmd => {
-        const li = document.createElement("li");
-        li.classList.add("admin-item");
+            const info = document.createElement('div');
+            info.className = 'admin-item-info';
+            const strong = document.createElement('strong');
+            strong.textContent = `Commande #${cmd.id}`;
+            info.appendChild(strong);
+            const spanClient = document.createElement('span');
+            spanClient.textContent = `Client : ${cmd.client_nom}`;
+            info.appendChild(spanClient);
+            const spanMenu = document.createElement('span');
+            spanMenu.textContent = `Menu : ${cmd.menuTitre}`;
+            info.appendChild(spanMenu);
+            const spanNb = document.createElement('span');
+            spanNb.textContent = `Nombre de personnes : ${cmd.nbPersonnes}`;
+            info.appendChild(spanNb);
+            const spanPrix = document.createElement('span');
+            spanPrix.textContent = `Prix total : ${cmd.prixTotal} €`;
+            info.appendChild(spanPrix);
+            const spanPrep = document.createElement('span');
+            spanPrep.textContent = `Prestation : ${cmd.datePrestation.split('-').reverse().join('-')} à ${cmd.heurePrestation}`;
+            info.appendChild(spanPrep);
+            const spanAdr = document.createElement('span');
+            spanAdr.textContent = `Adresse : ${cmd.adresse}, ${cmd.cp}, ${cmd.ville}`;
+            info.appendChild(spanAdr);
+            const spanTel = document.createElement('span');
+            spanTel.textContent = `Téléphone : ${cmd.gsm}`;
+            info.appendChild(spanTel);
+            const spanStat = document.createElement('span');
+            spanStat.className = 'statut-ligne';
+            spanStat.textContent = 'Statut actuel : ';
+            const statStrong = document.createElement('strong');
+            statStrong.textContent = cmd.statut;
+            spanStat.appendChild(statStrong);
+            info.appendChild(spanStat);
+            if (cmd.materiel) {
+                const warn = document.createElement('span');
+                warn.style.color = 'red';
+                warn.textContent = '⚠️ Matériel en prêt';
+                info.appendChild(warn);
+            }
 
-        li.innerHTML = `
-            <div class="admin-item-info">
-                    <strong>Commande #${cmd.id}</strong>
-                    <span>Client : ${cmd.client_nom}</span>
-                    <span>Menu : ${cmd.menuTitre}</span>
-                    <span>Nombre de personnes : ${cmd.nbPersonnes}</span>
-                    <span>Prix total : ${cmd.prixTotal} €</span>
-                    <span>Prestation : ${cmd.datePrestation.split('-').reverse().join('-')} à ${cmd.heurePrestation}</span>
-                    <span>Adresse : ${cmd.adresse}, ${cmd.cp}, ${cmd.ville}</span>
-                    <span>Téléphone : ${cmd.gsm}</span>
-                    <span class="statut-ligne">Statut actuel : <strong>${cmd.statut}</strong></span>
-                    ${cmd.materiel ? '<span style="color:red;">⚠️ Matériel en prêt</span>' : ''}
-            </div>
+            const actions = document.createElement('div');
+            actions.className = 'admin-actions';
+            const select = document.createElement('select');
+            select.className = 'select-statut';
+            select.dataset.id = cmd.id;
+            const opts = ["", "accepté", "en préparation", "en cours de livraison", "livré", "terminée"];
+            opts.forEach(o => {
+                const option = document.createElement('option');
+                option.value = o;
+                option.textContent = o === '' ? 'Changer statut' : o;
+                select.appendChild(option);
+            });
+            if (cmd.materiel) {
+                const option = document.createElement('option');
+                option.value = 'en attente du retour de matériel';
+                option.textContent = 'Retour matériel';
+                select.appendChild(option);
+            }
+            actions.appendChild(select);
 
+            const btnAnn = document.createElement('button');
+            btnAnn.className = 'btn-danger btn-annuler';
+            btnAnn.dataset.id = cmd.id;
+            btnAnn.textContent = 'Annuler';
+            actions.appendChild(btnAnn);
 
-            <div class="admin-actions">
-                <select class="select-statut" data-id="${cmd.id}">
-                    <option value="">Changer statut</option>
-                    <option value="accepté">Accepté</option>
-                    <option value="en préparation">En préparation</option>
-                    <option value="en cours de livraison">En cours de livraison</option>
-                    <option value="livré">Livré</option>
-                    <option value="terminée">Terminée</option>
-                    ${cmd.materiel ? '<option value="en attente du retour de matériel">Retour matériel</option>' : ''}
-                </select>
-
-                <button class="btn-danger btn-annuler" data-id="${cmd.id}">Annuler</button>
-            </div>
-        `;
-
-        listeCommandes.appendChild(li);
-    });
+            li.appendChild(info);
+            li.appendChild(actions);
+            listeCommandes.appendChild(li);
+        });
+    }
 }
 
 // AFFICHAGE AVIS
@@ -232,17 +345,39 @@ async function chargerAvisDepuisServeur() {
 }
 function afficherAvis() {
     const listeAvis = document.getElementById("liste-avis");
-    listeAvis.innerHTML = avisRecus.length === 0 ? "<p>Aucun avis en attente.</p>" : "";
+    while (listeAvis.firstChild) listeAvis.firstChild.remove();
+    if (avisRecus.length === 0) {
+        const p = document.createElement('p');
+        p.textContent = 'Aucun avis en attente.';
+        listeAvis.appendChild(p);
+        return;
+    }
 
     avisRecus.forEach(a => {
         const li = document.createElement("li");
-        li.innerHTML = `
-            <strong>${a.nom_client}</strong> (Commande #${a.commande_id})<br>
-            Note : ${a.note}/5<br>
-            "${a.commentaire}"<br>
-            <button class="btn-valider-avis" data-id="${a.id}">Valider</button>
-            <button class="btn-refuser-avis btn-danger" data-id="${a.id}">Supprimer</button>
-        `;
+        const strong = document.createElement('strong');
+        strong.textContent = a.nom_client;
+        li.appendChild(strong);
+        li.appendChild(document.createTextNode(` (Commande #${a.commande_id})`));
+        li.appendChild(document.createElement('br'));
+        const note = document.createElement('span');
+        note.textContent = `Note : ${a.note}/5`;
+        li.appendChild(note);
+        li.appendChild(document.createElement('br'));
+        const comm = document.createElement('span');
+        comm.textContent = `"${a.commentaire}"`;
+        li.appendChild(comm);
+        li.appendChild(document.createElement('br'));
+        const btnVal = document.createElement('button');
+        btnVal.className = 'btn-valider-avis';
+        btnVal.dataset.id = a.id;
+        btnVal.textContent = 'Valider';
+        const btnRef = document.createElement('button');
+        btnRef.className = 'btn-refuser-avis btn-danger';
+        btnRef.dataset.id = a.id;
+        btnRef.textContent = 'Supprimer';
+        li.appendChild(btnVal);
+        li.appendChild(btnRef);
         listeAvis.appendChild(li);
     });
 }
@@ -268,15 +403,30 @@ function afficherHoraires() {
         return ordreJours.indexOf(ja) - ordreJours.indexOf(jb);
     });
 
-
     afficherListe(
         listeHoraires,
         horairesTries,
-        (h) => `
-            <strong>${h.jour}</strong> : ${h.ouverture} - ${h.fermeture}<br>
-            <button class="btn-modifier-horaire" data-id="${h.id}">Modifier</button>
-            <button class="btn-supprimer-horaire" data-id="${h.id}">Supprimer</button>
-        `,
+        (h) => {
+            const wrapper = document.createElement('div');
+            const jourElem = document.createElement('strong');
+            jourElem.textContent = h.jour;
+            wrapper.appendChild(jourElem);
+            wrapper.appendChild(document.createTextNode(` : ${h.ouverture} - ${h.fermeture}`));
+
+            const btnMod = document.createElement('button');
+            btnMod.className = 'btn-modifier-horaire';
+            btnMod.dataset.id = h.id;
+            btnMod.textContent = 'Modifier';
+            const btnSup = document.createElement('button');
+            btnSup.className = 'btn-supprimer-horaire';
+            btnSup.dataset.id = h.id;
+            btnSup.textContent = 'Supprimer';
+
+            wrapper.appendChild(document.createElement('br'));
+            wrapper.appendChild(btnMod);
+            wrapper.appendChild(btnSup);
+            return wrapper;
+        },
         "Aucun horaire enregistré."
     );
 }
@@ -333,7 +483,7 @@ document.addEventListener("click", (e) => {
 
     if (e.target.classList.contains("btn-modifier-menu")) {
         // On trouve le menu dans la liste actuelle pour pré-remplir les prompts
-        const menu = menusFromDB.find(m => m.id == id);
+        const menu = menusFromDB.find(m => String(m.id) === String(id));
         if (!menu) return;
 
         const nouveauTitre = prompt("Titre du menu :", menu.titre || menu.nom);
@@ -349,7 +499,7 @@ document.addEventListener("click", (e) => {
                     id: id, 
                     titre: nouveauTitre, 
                     description: nouvelleDesc, 
-                    prix: parseFloat(nouveauPrix) 
+                    prix: Number.parseFloat(nouveauPrix) 
                 })
             })
             .then(r => r.json())
@@ -413,7 +563,7 @@ document.addEventListener("click", (e) => {
 
     // 4 - COMMANDES
     if (e.target.classList.contains("btn-annuler")) {
-        const commande = commandes.find(cmd => cmd.id == id);
+        const commande = commandes.find(cmd => String(cmd.id) === String(id));
         if (!commande) return;
 
         const contact = prompt("Mode de contact utilisé pour prévenir le client (appel ou mail) :");
@@ -484,7 +634,7 @@ document.addEventListener("click", (e) => {
 
         const id = e.target.dataset.id;
 
-        const h = horaires.find(h => h.id == id);
+        const h = horaires.find(h => String(h.id) === String(id));
         if (!h) return;
 
         const jour = prompt("Jour :", h.jour);
@@ -546,9 +696,9 @@ document.getElementById("btn-ajout-menu").addEventListener("click", async () => 
     const nom = prompt("Nom du menu :");
     const description = prompt("Description :");
     const prixStr = prompt("Prix :");
-    const prix = parseFloat(prixStr);
+    const prix = Number.parseFloat(prixStr);
 
-    if (!nom || !description || isNaN(prix) || prix <= 0) {
+    if (!nom || !description || Number.isNaN(prix) || prix <= 0) {
         alert("Saisie invalide.");
         return;
     }

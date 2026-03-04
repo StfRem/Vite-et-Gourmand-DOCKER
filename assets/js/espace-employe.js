@@ -49,10 +49,10 @@ async function chargerMenusDepuisServeur() {
     try {
         const response = await fetch("../PHP/getMenus.php");
         const tousLesMenus = await response.json();
-        const idsPermanents = [1, 2, 3]; 
+        const idsPermanents = new Set([1, 2, 3]); 
         
         // Filtrage des menus personnalisés
-        menusFromDB = tousLesMenus.filter(menu => !idsPermanents.includes(Number(menu.id)));
+        menusFromDB = tousLesMenus.filter(menu => !idsPermanents.has(Number(menu.id)));
         afficherMenus();
     } catch (error) {
         console.error("Erreur chargement menus :", error);
@@ -290,7 +290,7 @@ document.addEventListener("click", async (e) => {
                 headers: { "Content-Type": "application/json" },
                 credentials: "include", // Assure que les cookies de session sont envoyés pour l'authentification
                 body: JSON.stringify({ 
-                    id: id, titre: nouveauTitre, description: nouvelleDesc, prix: parseFloat(nouveauPrix) 
+                    id: id, titre: nouveauTitre, description: nouvelleDesc, prix: Number.parseFloat(nouveauPrix) 
                 })
             });
             const result = await response.json();
@@ -449,9 +449,9 @@ document.getElementById("btn-ajout-menu").addEventListener("click", async () => 
     const nom = prompt("Nom du menu :");
     const description = prompt("Description :");
     const prixStr = prompt("Prix :");
-    const prix = parseFloat(prixStr);
+    const prix = Number.parseFloat(prixStr);
 
-    if (!nom || !description || isNaN(prix) || prix <= 0) {
+    if (!nom || !description || Number.isNaN(prix) || prix <= 0) {
         alert("Saisie invalide.");
         return;
     }
