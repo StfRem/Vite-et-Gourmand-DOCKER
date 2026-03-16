@@ -1,158 +1,152 @@
 # ACTIVITÉ-TYPE 1
 ## Développer la partie front-end d'une application web ou web mobile sécurisée
 
----
-
 ## EXEMPLE N°1: APPLICATION WEB "VITE & GOURMAND" - PLATEFORME DE GESTION DE COMMANDES TRAITEUR
-
----
 
 ## 1. TÂCHES OU OPÉRATIONS QUE VOUS AVEZ EFFECTUÉES, ET DANS QUELLES CONDITIONS
 
-### A. Description des Tâches Front-End
+A. Description des Tâches Front-End
 
-#### 1. **Conception et Création des Structures HTML**
+1. **Conception et Création des Structures HTML**
 
 J'ai développé **12 pages HTML5** constitutives de l'application web:
 
-**Pages clients:**
 - **index.html** (Accueil):
   - Section présentation "Vite et Gourmand - Traiteur depuis 25 ans à Bordeaux"
   - Affichage de **3 avis clients validés** avec notation (1-5 étoiles)
   - Mise en avant des avantages: "Menus personnalisés", "Produits frais et locaux", "Livraison ponctuelle"
   - Navigation vers autres sections
 
-- **menus.html** (Catalogue des menus):
-  - Système de **5 filtres interactifs** (sans rechargement page):
+
+- **menus.html** (Catalogue des 3 menus proposé):
+  - Système de **5 filtres interactifs** (sans rechargement de page):
     * Filtre par prix maximum (input number)
     * Filtre par fourchette de prix (range slider)
     * Filtre par thème (Noël, Pâques, Événements, Classique)
     * Filtre par régime (Classique, Végétarien, Vegan)
     * Filtre par nombre minimum de personnes
-  - Affichage dynamique des menus en **cartes responsive**
-  - Chaque carte contient: image, titre, description, prix, nb personnes min, bouton "Détails"
+    **Galerie d'images** du menu (navigation gauche/droite)
+  - Chaque carte contient: image, titre, description, prix, nb personnes min, bouton "Détails "menu-detail.html""
 
-- **menu-detail.html** (Détail complet d'un menu):
-  - **Galerie d'images** multi-photos du menu (navigation gauche/droite, indicateurs points)
-  - Titre et description détaillée du menu
-  - Affichage du **thème** (Noël, Pâques, etc.)
-  - Affichage du **régime** (Classique, Vegan, etc.)
-  - **Liste des plats par catégorie**:
-    * Entrées avec allergènes listés
-    * Plats principaux avec allergènes
-    * Desserts avec allergènes
-  - Nombre de personnes minimum requis
-  - Prix pour le nombre minimum
-  - **Conditions de commande** (ex: "À commander 2 jours avant")
-  - **Stock disponible** (ex: "5 commandes restantes")
-  - Bouton **"COMMANDER"** (redirection vers commande.html si authentifié, sinon login)
+
+- **menu-detail.html** (Reprend le même menu pour l'afficher seul et possibilité de le commandé sur cette page)
+    La carte est identique a la page des 3 menus proposé.
+      - Bouton **"COMMANDER"** (redirection vers commande.html si connecté, sinon vers la page d'inscription "register.html")
+
 
 - **register.html** (Inscription):
   - Formulaire complet avec validation temps réel:
     * Champ "Nom et Prénom"
-    * Champ "N° de téléphone GSM"
+    * Champ "N° de téléphone" (vérification que le numéro commence par 06 ou 07 seulement au  clic du bouton Créer mon compte)
     * Champ "Email" (avec vérification unicité côté serveur)
     * Champ "Adresse" (rue, numéro)
     * Champ "Code postal"
     * Champ "Ville"
-    * Champ "Mot de passe" avec **affichage des critères**:
+    * Champ "Mot de passe masqué par des étoiles a la place)" avec 
+    **Affichage des critères de sécurité demandé**:
       - 10 caractères minimum
       - 1 majuscule obligatoire
       - 1 minuscule obligatoire
       - 1 chiffre obligatoire
       - 1 caractère spécial (@, $, !, %, *, &, etc.)
-    * **Indicateur de force du mot de passe** (faible/moyen/fort) en temps réel
-    * **Checkbox acceptation CGV** (required, lien vers cgv.html)
+
+  - Case a coché pour acceptation CGV** (Obligatoire, lien vers la page cgv.html)
+
     * Bouton "Créer mon compte"
-  - Messages d'erreur détaillés et en couleur
-  - Redirection après succès vers page accueil ou connexion
+      - Messages d'erreur détaillés si on oublie de remplir un des champs.
+      - Redirection après succès vers page accueil ou page de la commande.
+
 
 - **login.html** (Connexion):
-  - Formulaire simple:
     * Champ "Email" (username)
     * Champ "Mot de passe"
     * Bouton "Se connecter"
-  - Liens "Créer un compte" et "J'ai oublié mon mot de passe" (À implémenter)
-  - Messages d'erreur: "Email non trouvé" ou "Mot de passe incorrect"
+  - Bouton "Créer un compte" et "J'ai oublié mon mot de passe" (À implémenter)
+  - Vérification de connexion dans la BDD sinon Messages d'erreur: "Email non trouvé" ou "Mot de passe incorrect"
 
-- **commande.html** (Passer une commande):
+
+- **commande.html** (Page dédié a l'utilisateur connecté exclusivement):
+
   - Section "Informations client" (auto-remplie depuis le compte utilisateur):
-    * Nom et Prénom (readonly)
-    * Email (readonly)
-    * N° de téléphone (readonly)
+      * Nom et Prénom
+      * Email
+      * N° de téléphone
+
   - Section "Adresse de livraison":
-    * Adresse (rue et numéro)
-    * Ville
-    * Code postal
-    * Distance en km (calculée automatiquement ou saisie manuelle)
-  - **Calcul frais de livraison dynamique** (affichage en temps réel):
-    * 5€ si livraison à Bordeaux
-    * 5€ + 0,59€ par km si hors Bordeaux
-  - Section "Date et heure de prestation":
-    * Date de livraison (input date, min = J+1)
-    * Heure souhaitée (input time)
+      * Adresse (rue et numéro)
+      * Ville
+      * Code postal
+
+  - Calcul frais de livraison dynamique ajouté au prix final (affichage en temps réel):
+      * 5€ de livraison ajouté systématiquement a la commande
+      * 0,59€ par km si hors Bordeaux
+
+  - Section "Date et heure de prestation" (modifiable avant acceptation de la commande):
+      * Date de livraison (input date, min = J+1)
+      * Heure souhaitée (input time)
+
   - Section "Nombre de personnes":
-    * Input number pour le nombre de personnes
-    * **Notification si < minimum requis** ("Minimum X personnes requis")
-    * **Calcul prix en temps réel**: prix = (menuPrix × nbPersonnes / nbMin)
-  - **Réduction 10% automatique** si (nbPersonnes > nbMin + 5)
-    * Message: "Réduction 10% appliquée ! Économies: XX€"
-  - **Affichage du prix total** mis à jour dynamiquement
-  - **Affichage des conditions du menu** (stockage, délais, etc.)
-  - Bouton "Valider la commande" → POST vers serveur PHP
-  - Bouton "Retour à mon Compte"
+      * Notification si < minimum requis** ("Minimum X personnes requis")
+      * Calcul prix en temps réel**: prix = (menuPrix × nbPersonnes / nbMin)
+      * Réduction 10% automatique** si on rajoute 5 pers au nb de pers minimum
+      * Affichage du prix total mis à jour dynamiquement
+      * Bouton "Valider la commande" → POST vers serveur PHP
+      * Bouton "Retour à mon Compte"
+
 
 - **espace-utilisateur.html** (Mon compte client):
-  - Section "Mes Informations Personnelles":
-    * Formulaire avec champs modifiables: nom, gsm, adresse, cp, ville
-    * Bouton "Mettre à jour mon profil"
-    * Message de confirmation après modification
-  - Section "Mes Commandes":
-    * **Liste de toutes les commandes** avec détails:
-      - Menu commandé
-      - Nombre de personnes
-      - Date et heure de livraison
-      - Prix total
-      - **Statut** (en attente, accepté, en préparation, livré, terminée)
-    * **Historique de modification** (affiche les dates/heures de chaque changement de statut)
-    * Bouton **"Annuler"** (visible SEULEMENT si statut = "en attente", disparu après acceptation)
-    * Bouton "Modifier" (permet de changer: nb personnes, date, heure, adresse - PAS le menu)
-    * Bouton "Voir détails"
+
+  - "Mes Informations Personnelles":
+      * Formulaire avec champs "modifiables": nom et prénom, gsm, adresse, cp, ville
+      * Bouton "Mettre à jour mon profil"
+      * Message de confirmation après modification
+
+  - "Mes Commandes":
+      - Affiche Menu commandé
+      - Affichage des anciennes commande en statut terminé avec l'avis écris 
+      - Statut** (en attente, accepté, en préparation, livré, terminée)
+    **Historique de modification** (affiche les dates/heures de chaque changement de statut) a vérifié
+      * Bouton **"Annuler"** (visible SEULEMENT si statut = "en attente", disparu après acceptation) a vérifié
+      * Bouton "Modifier" (permet de changer: nb personnes, date, heure, adresse - PAS le menu)
+      * Bouton "Voir détails"
+
   - Section "Avis":
-    * Visible après livraison d'une commande
-    * Formulaire de notation (1-5 étoiles)
-    * Champ commentaire
-    * Message: "Vous pouvez laisser un avis après livraison"
+    - Visible après changement de status de la commande en terminé par admin ou employé
+      * Formulaire de notation (1-5 étoiles)
+      * Champ commentaire
 
 - **espace-employe.html** (Tableau de bord employé):
+
   - Section "Gestion des menus":
-    * Liste de tous les menus
-    * Chaque menu affiche: image, titre, prix, stock, thème
-    * Boutons: "Modifier", "Supprimer", "Voir détails"
-    * Bouton "Créer un menu" (ouvre formulaire)
+      * Liste de tous les menus
+      * Chaque menu affiche: image, titre, prix, stock, thème
+      * Boutons: "Modifier", "Supprimer", "Voir détails"
+      * Bouton "Créer un menu" (ouvre formulaire)
+
   - Section "Gestion des plats":
-    * Liste de tous les plats
-    * Affichage: nom, allergènes, menu associé
-    * Boutons: "Modifier", "Supprimer"
-    * Bouton "Créer un plat"
+      * Liste de tous les plats
+      * Affichage: nom, allergènes, menu associé
+      * Boutons: "Modifier", "Supprimer"
+      * Bouton "Créer un plat"
+
   - Section "Gestion des commandes":
     * **Filtres en temps réel**:
-      - Dropdown "Statut" (tous, en attente, accepté, en préparation, livré, terminée)
-      - Search box "Rechercher un client"
-    * Liste des commandes avec code couleur par statut
+      - "Statut" (tous, en attente, accepté, en préparation, livré, terminée)
+      - "Rechercher un client"
     * Détails: client, menu, date, nbPersonnes, adresse, prix, statut
-    * Boutons: "Accepter", "En préparation", "Livrer"
-    * **Changer statut** vers les options suivantes:
+    * **Changer statut commande** vers les options suivantes:
       - En attente → Accepté
       - Accepté → En préparation
       - En préparation → En cours de livraison
       - En cours de livraison → Livré
       - Livré → Terminée (ou "En attente retour matériel" si matériel)
+
   - Section "Gestion des avis":
     * Liste des avis **en attente de modération**
     * Affiche: client, notation, commentaire, date
     * Boutons: "Approuver" (avis visible), "Rejeter" (avis supprimé)
     * Seuls les avis approuvés s'affichent sur index.html
+
   - Section "Gestion des horaires":
     * Affichage des horaires pour chaque jour (lundi-dimanche)
     * Format: "Lundi: 10h00-18h00"
@@ -160,18 +154,16 @@ J'ai développé **12 pages HTML5** constitutives de l'application web:
     * Boutons: "Modifier", "Supprimer"
     * Bouton "Ajouter horaire" (pour les jours fermés ou modifier)
 
-- **espace-admin.html** (Tableau de bord administrateur):
-  - Section "Gestion des employés":
-    * Liste de tous les employés avec statut (actif/suspendu)
-    * Affichage: nom, email, statut, date d'embauche
+- **espace-admin.html** Identique a employe.html sauf:
+  - "Gestion des employés":
     * Bouton "Créer un employé":
       - Crée un compte temporaire
-      - Email + password temporaire générés
-      - Email envoyé à l'employé: "Votre compte a été créé, contactez José pour le password"
-      - **IMPORTANT**: Impossible de créer un compte ADMIN depuis l'interface
+      - Email + password temporaire générés en BDD
+      - Email (alert) envoyé à l'employé: "Votre compte a été créé, contactez José pour le password"
     * Boutons: "Suspendre" (désactive sans supprimer), "Supprimer"
-  - **Autres sections identiques à espace-employe**: Menus, Plats, Commandes, Avis, Horaires
-    * Admin a TOUS les droits de l'employé en plus de la gestion des employés
+    * Liste de tous les employés avec statut (actif/suspendu)
+    * Affichage: nom, email, statut, date d'embauche
+  
 
 - **contact.html** (Formulaire contact):
   - Formulaire simple:
@@ -195,14 +187,13 @@ J'ai développé **12 pages HTML5** constitutives de l'application web:
 #### 2. **Stylisation CSS et Design Responsive**
 
 **Approche de design:**
-- **Mobile-first**: Design pensé d'abord pour petit écran
+  Design pensé d'abord pour petit écran
 - **Responsive breakpoints**:
   * Mobile: 320px - 767px
   * Tablet: 768px - 1024px
   * Desktop: 1025px et +
 
 **Framework CSS:**
-- Bootstrap 5 (CDN): Utilisation des classes prédéfinies (grid, buttons, forms, cards)
 - **Fichier style.css personnalisé** (~1500 lignes) pour branding "Vite et Gourmand":
   * Couleurs de l'entreprise
   * Police Roboto (Google Fonts)
@@ -226,11 +217,10 @@ J'ai développé **12 pages HTML5** constitutives de l'application web:
 1. **script.js** (Script principal):
    ```javascript
    - loadNavbar(): Charge la navigation dynamiquement
-   - loadFooter(): Charge le footer avec horaires
+   - loadFooter(): Charge le footer avec horaires et liens vers cgv et mention légale
    - checkAuth(): Vérifie si utilisateur connecté via session
    - logout(): Déconnexion
-   - handleErrors(): Gestion des erreurs global
-   ```
+
 
 2. **menu.js** (Affichage et filtres menus):
    ```javascript
@@ -244,7 +234,7 @@ J'ai développé **12 pages HTML5** constitutives de l'application web:
      * Filtre nb personnes min
    - Combinaison des filtres (AND logic)
    - Mise à jour affichage en temps réel
-   ```
+
 
 3. **menu-detail.js** (Détail menu):
    ```javascript
@@ -253,28 +243,25 @@ J'ai développé **12 pages HTML5** constitutives de l'application web:
    - Affiche galerie d'images:
      * Navigation flèches gauche/droite
      * Points indicateurs (dots)
-     * Image principale actualisée
    - Affiche tous les détails: titre, description, thème, régime
    - Liste plats (entrées/plats/desserts) avec allergènes
    - Bouton "COMMANDER":
      * Si connecté: redirige vers commande.html
      * Si non connecté: redirige vers login.html
-   ```
 
 4. **register.js** (Inscription):
    ```javascript
    - Validation côté client AVANT envoi:
      * Nom: non-vide
      * Email: format valide (regex)
-     * GSM: format valide (10-12 chiffres)
+     * GSM: format valide 06 ou 07 (10-12 chiffres)
      * Adresse: non-vide
-     * Password: vérifie critères (10 car, 1 maj, 1 min, 1 chiffre, 1 spécial)
+     * Password: vérifie critères (10 caractères, 1 maj, 1 min, 1 chiffre, 1 spécial)
      * CGV: checkbox coché
-   - Affichage force password en temps réel (faible/moyen/fort)
    - Affichage erreurs détaillées en rouge
    - Submit: POST vers /PHP/register.php avec JSON
    - Réponse JSON: {status: "success"/"error", message: "..."}
-   - Redirection après succès vers login
+   - Redirection après succès vers login (a verifier)
    ```
 
 5. **login.js** (Connexion):
@@ -283,7 +270,7 @@ J'ai développé **12 pages HTML5** constitutives de l'application web:
    - Validation côté client
    - POST vers /PHP/login.php
    - Réponse JSON: {success: true/false, message: "..."}
-   - Si succès: Crée session et redirige vers index ou espace approprié
+   - Si succès: Crée session et redirige vers index.html ( a verifier)
    - Si erreur: Affiche message "Email non trouvé" ou "Password incorrect"
    ```
 
